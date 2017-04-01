@@ -11,5 +11,19 @@ before((done) => {
 })
 
 beforeEach((done) => {
-  mongoose.connection.db.dropCollection('users', (err, result) => { done() })
+  const { collections } = mongoose.connection
+  const collectionKeys = Object.keys(collections)
+  let counter = 0
+
+  function check() {
+    counter += 1
+    if (counter === collectionKeys.length) {
+      done()
+    }
+  }
+
+  collectionKeys.forEach((collection) => {
+    mongoose.connection.db.dropCollection(collection, (err, result) => { check() })
+  })
+
 })

@@ -1,7 +1,9 @@
 const mongoose = require('mongoose')
+const PostSchema = require('./post')
 const Schema = mongoose.Schema
+const { ObjectId } = Schema.Types
 
-const userSchema = new Schema({
+const UserSchema = new Schema({
   name: {
     type: String,
     validate: {
@@ -10,9 +12,26 @@ const userSchema = new Schema({
     },
     required: [true, 'Name is required.']
   },
-  postCount: Number
+  posts: [PostSchema],
+  likes: Number,
+  blogPosts: [{
+    type: ObjectId,
+    ref: 'blogPost'
+  }]
 })
 
-const User = mongoose.model('user', userSchema)
+UserSchema.virtual('postCount').get(function() {
+  return this.posts.length;
+})
+
+UserSchema.pre('remove', function(next) {
+  const BlogPost = mongoose.model('blogPost')
+
+  // When you delete a user, delete all associated blogposts
+  BlogPost.remove({ _id: { $in: this.blogPosts }})
+    .then(() => next())
+})
+
+const User = mongoose.model('user', UserSchema)
 
 module.exports = User
